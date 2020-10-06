@@ -1,0 +1,65 @@
+---
+title: "Homework 3"
+author: "Xiangyi Liu (xl3048)"
+date: "10/6/2020"
+output: github_document
+---
+
+
+```{r setup}
+library(tidyverse)
+library(p8105.datasets)
+```
+
+```{r data}
+data("instacart")
+```
+
+How many aisle
+## Problem 1
+```{r}
+instacart %>%
+  count(aisle) %>%
+  arrange(desc(n))
+```
+
+Make plot.
+```{r scatterplot}
+instacart %>%
+  count(aisle) %>%
+  filter(n > 1000) %>%
+  mutate(
+    aisle = factor(aisle),
+    aisle = fct_reorder(aisle,n) #reorder factor 'aisle' based on 'n'
+  ) %>%
+  ggplot(aes(x = aisle, y = n)) +
+  geom_point() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1) )
+```
+
+Make a table.
+```{r table}
+instacart %>%
+  filter(aisle %in% c("baking ingredients", "dog food care","packaged vegetables fruits")) %>%
+  group_by(aisle) %>%
+  count(product_name) %>%
+  mutate(rank = min_rank(desc(n))) %>%
+  filter(rank < 4) %>%
+  arrange(aisle, rank) %>%
+  knitr::kable()
+```
+
+Apple vs. ice cream.
+```{r}
+instacart %>%
+  filter(product_name %in% c("Pink Lady Apple", "Coffee Ice Cream")) %>%
+  group_by(product_name, order_dow) %>%
+  summarize(mean_hour = mean(order_hour_of_day)) %>%
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hour
+  )
+
+```
+
+
