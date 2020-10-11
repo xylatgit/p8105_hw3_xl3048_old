@@ -98,6 +98,7 @@ accel_df <-
     values_to = "activity_count"
   ) %>%
   mutate(
+    minute_of_day = as.numeric(minute_of_day),
     day_id = as.factor(day_id),
     week = as.factor(week),
     day_of_week = as.factor(day_of_week),
@@ -137,15 +138,96 @@ day_info %>% knitr::kable()
 From the table alone, we can observe that the person gradually has less activity when the recording approaching to the end. There are two extreme low values on day 24 and day 31. On average, the person has less activity on Wednesdays.
 
 ```{r plot_p2}
-ggplot(accel_df, aes(x=minute_of_day, y=activity_count)) +
-  geom_point(aes(color=day_of_week),alpha = 0.5) +
+ggplot(accel_df, aes(x=minute_of_day, y=activity_count,color=day_id)) +
+  geom_point(alpha = 0.5) +
   labs(title = "Activity Over The Day",
        x = "Minute of the day",
        y = "Activity Count") +
-  geom_smooth(se=FALSE)
+  scale_x_continuous(breaks = round(seq(0,1440,by=120)))
 ```
 
-From the plot above, we can see that most pink dots gather at the bottom, which means that the person has less activity on Wednesdays during the observation.  
+```{r}
+ggplot(accel_df, aes(x=minute_of_day, y=activity_count,color=day_id)) +
+  geom_smooth(se=FALSE,method = "lm")+
+  labs(title = "Activity Over The Day",
+       x = "Minute of the day",
+       y = "Activity Count") +
+  scale_x_continuous(breaks = round(seq(0,1440,by=120)))
+```
+
+For clarity, the scatterplot and their trendlines are plotted seperately. 
+
+
+## Problem 3 
+```{r}
+data("ny_noaa")
+ny_noaa <-
+  ny_noaa %>%
+  na.omit() %>%
+  separate(date, sep = "-", into = c("year","month","day")) %>%
+  mutate(
+    month = as.numeric(month),
+    month = month.name[month],
+    tmin = as.numeric(tmin)/10,
+    tmax = as.numeric(tmax)/10
+  )
+
+snow_rank<-
+  plyr::count(ny_noaa,"snow") %>%
+  arrange(desc(freq))
+
+head(snow_rank)%>%knitr::kable()
+
+```
+The frequency of each unique observed value for 'snow' is counted and sorted in a decreasing order. The five most commonly observed values are shown in the table above.
+
+```{r}
+jan_tmax<-
+  subset(ny_noaa,month=="January") %>%
+  group_by(id,year) %>%
+  summarize(
+    mean_tmax=mean(tmax)
+  )%>%
+  mutate(
+    month = "January"
+  )%>%
+  relocate(month,everything())
+
+jul_tmax<-
+  subset(ny_noaa,month=="July") %>%
+  group_by(id,year) %>%
+  summarize(
+    mean_tmax=mean(tmax)
+  )%>%
+  mutate(
+    month = "July"
+  )%>%
+  relocate(month,everything())
+
+comp_tmax<-
+  rbind(jan_tmax,jul_tmax) %>%
+  na.omit()%>%
+  mutate(
+    year=as.factor(year)
+  )
+```
+
+```{r plot_janvsjul}
+ggplot(comp_tmax, aes(x=year,y=mean_tmax,color=month))+
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ month)+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1) )
+```
+The average max temperature for each year in January ranges from `r quantile(jan_tmax$mean_tmax,0.25)` to 
+`r quantile(jan_tmax$mean_tmax,0.75)`; The average max temperature for each year in July ranges from `r quantile(jul_tmax$mean_tmax,0.25)` to 
+`r quantile(jul_tmax$mean_tmax,0.75)`. Moreover, the average max temperature for January varies more across stations in the same year.
+From the plot we could observe that the max temperature in January has more outliers compared to July. There are a couple of noticeable outliers, such as the January in 1982 and 1996, the July in 1988.
+
+```{r}
+
+```
+
 
 
 
