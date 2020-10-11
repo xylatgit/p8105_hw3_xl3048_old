@@ -156,6 +156,7 @@ ggplot(accel_df, aes(x=minute_of_day, y=activity_count,color=day_id)) +
 ```
 
 For clarity, the scatterplot and their trendlines are plotted seperately. 
+The person tend to have more activity at the beginning of the study, and graduallt decreasing as the study approached to its end.
 
 
 ## Problem 3 
@@ -217,18 +218,39 @@ ggplot(comp_tmax, aes(x=year,y=mean_tmax,color=month))+
   geom_point(alpha = .5) +
   geom_smooth(se = FALSE) + 
   facet_grid(. ~ month)+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1) )
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1) )+
+  labs(title = "January vs. July")
 ```
 The average max temperature for each year in January ranges from `r quantile(jan_tmax$mean_tmax,0.25)` to 
 `r quantile(jan_tmax$mean_tmax,0.75)`; The average max temperature for each year in July ranges from `r quantile(jul_tmax$mean_tmax,0.25)` to 
 `r quantile(jul_tmax$mean_tmax,0.75)`. Moreover, the average max temperature for January varies more across stations in the same year.
 From the plot we could observe that the max temperature in January has more outliers compared to July. There are a couple of noticeable outliers, such as the January in 1982 and 1996, the July in 1988.
 
-```{r}
-
+```{r hex}
+library(hexbin)
+temp_hex<-ggplot(ny_noaa, aes(x = tmax, y = tmin)) + 
+  geom_hex()+
+  labs(title = "tmin & tmax")
 ```
 
+```{r}
+filtered<-
+  ny_noaa %>%
+  filter((snow>0))%>%
+  filter(snow<100)%>%
+  mutate(year = forcats::fct_reorder(year, snow))
 
+snow_dist<-
+  ggplot(filtered, aes(x = year,y=snow)) + 
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1) )+
+  labs(title="Snowfall Distribution")
+```
+
+```{r combine}
+library(patchwork)
+temp_hex+snow_dist
+```
 
 
 
